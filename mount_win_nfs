@@ -1,0 +1,55 @@
+#!/bin/bash
+
+case "$1" in
+start)
+        if [ "s$(ping -c 3 192.168.20.35 | grep "0% packet loss")" = "s" ]
+        then 
+                echo "Can't ping "
+                exit 1;
+        fi
+
+        echo "mount win-nfs..."
+        sudo mount -t nfs -o nolock 192.168.20.35:/f/nfsroot /mnt/nfs 
+
+        if [ "s$( ls /mnt/nfs )" = "s" ]
+        then
+                echo "mount win-nfs error!!!"
+                echo "$(date) mount error " >> /var/log/mount_win_nfs.log
+        else
+
+                echo "mount win-nfs success!"
+                echo "$(date) mount  ok " >> /var/log/mount_win_nfs.log
+                info=$( ls /mnt/nfs/ -la )  
+                echo "$info" >> /var/log/mount_win_nfs.log 
+        fi
+
+        ;;
+
+stop)
+        echo "umount win-nfs"
+        sudo umount  -f /mnt/nfs > /dev/null 
+        if [ $? -eq 0 ]
+        then
+                echo "umount success"
+        else
+                echo "umount error!"
+        fi
+
+        ;;
+
+reload)
+        echo "nothings"
+        ;;
+
+force-reload|restart)
+        $0 stop
+        $0 start
+        ;;
+
+*)
+        echo "Usage: /etc/init.d/mount_win_nfs {start|stop|reload|restart|force-reload}"
+        exit 1
+        ;;
+esac
+
+exit 0
